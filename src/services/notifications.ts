@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications"
+import { Platform } from "react-native"
 
 Notifications.setNotificationHandler({
   handleNotification: async() => ({
@@ -10,67 +11,48 @@ Notifications.setNotificationHandler({
 })
 
 export async function requestPermissaoNotificacao() {
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Alarme',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    });
+  }
+
   const { status } = await Notifications.requestPermissionsAsync()
 
   return status === "granted";
-}
-
-//Notificações Imediatas
-export async function envioImediatoNotificacao() {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "📢 Mensagem Imediata 📢",
-      body: "Essa mensagem é imediata"
-    },
-    trigger: null
-  })
-}
-
-//Notificações 5 segundos
-export async function envioDelayNotificacao() {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "⏲️ Notificação atrasada ⏲️",
-      body: "Passaram 5 segundos"
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 5,
-      //repeats: true
-    }
-  })
 }
 
 export async function cancelarTodasNotificacoes() {
   await Notifications.cancelAllScheduledNotificationsAsync()
 }
 
-//Notificações com som
-export async function envioSomNotificacao() {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "🎧 Lembrete 🎧",
-      body: "Essa mensagem é com som",
-      sound: "default"
-    },
-    trigger: null
-  })
-}
-
 export async function agendarAlarme(hora: string, minuto: string) {
   await Notifications.cancelAllScheduledNotificationsAsync();
 
-  // Agenda a nova notificação
+  const dataAlarme = new Date();
+  
+  dataAlarme.setHours(parseInt(hora, 10));
+  dataAlarme.setMinutes(parseInt(minuto, 10));
+  dataAlarme.setSeconds(0);
+  dataAlarme.setMilliseconds(0);
+
+  if (dataAlarme.getTime() < Date.now()) {
+    dataAlarme.setDate(dataAlarme.getDate() + 1);
+  }
+
   await Notifications.scheduleNotificationAsync({
     content: {
       title: "⏰ Alarme Disparado! ⏰",
-      body: `Esse é o alarme das ${hora}:${minuto}.`, // Sua mensagem customizada
-      sound: "default",
+      body: `Esse é o alarme das ${hora}:${minuto}.`, 
+      sound: true, 
     },
     trigger: {
-      hour: parseInt(hora, 10),     
-      minute: parseInt(minuto, 10), 
-      repeats: true,
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: dataAlarme, 
     },
   });
 }

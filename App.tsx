@@ -1,16 +1,31 @@
 import { StyleSheet, View, Text, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Button from '@/components/Button';
 import HoraAtual from '@/components/HoraAtual';
 import RelogioInput from '@/components/RelogioInput';
+import { agendarAlarme, requestPermissaoNotificacao } from '@/services/notifications';
 
 export default function App() {
   const [minutoDigitado, setMinutoDigitado] = useState('');
   const [horaDigitada, setHoraDigitada] = useState('');
-  
   const [horaReal, setHoraReal] = useState('');
 
+  const [alarmeSalvo, setAlarmeSalvo] = useState<string | null>(null);
+
+useEffect(() => {
+    async function iniciarApp() {
+      await requestPermissaoNotificacao();
+      
+      const horarioSalvo = await AsyncStorage.getItem('@alarme_registrado');
+      if (horarioSalvo) {
+        setAlarmeSalvo(horarioSalvo);
+      }
+    }
+    iniciarApp();
+  }, []);
+  
   useEffect(() => {
     const atualizarRelogio = () => {
       const agora = new Date();
@@ -29,10 +44,38 @@ export default function App() {
     return () => clearInterval(intervalo);
   }, []);
 
+const handleDefinirAlarme = async () => {
+    if (!horaDigitada || !minutoDigitado) {
+      Alert.alert("Atenção", "Preencha a hora e o minuto.");
+      return;
+    }
+
+    const horarioFormatado = `${horaDigitada}:${minutoDigitado}`;
+
+    try {
+      await agendarAlarme(horaDigitada, minutoDigitado);
+      
+      await AsyncStorage.setItem('@alarme_registrado', horarioFormatado);
+      
+      setAlarmeSalvo(horarioFormatado);
+      Alert.alert("Sucesso", `O alarme das ${horarioFormatado} foi salvo com sucesso!`);
+      
+      setHoraDigitada('');
+      setMinutoDigitado('');
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar o alarme.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}> ⏱️ ClockBox ⏱️ </Text>
       <HoraAtual time={horaReal} />
+
+      {alarmeSalvo && (
+        <Text style={styles.salvoTexto}>Alarme Registrado: {alarmeSalvo}</Text>
+      )}
+
       <View style={styles.alarmArea}>
         <Text style={styles.boxInput}>Para qual horario você quer seu alarme?</Text>
         <RelogioInput 
@@ -44,7 +87,7 @@ export default function App() {
         
         <Button 
           title="Definir Alarme" 
-          onPress={() => Alert.alert("Sucesso", `Você escolheu: ${horaDigitada}:${minutoDigitado}`)}
+          onPress={handleDefinirAlarme}
         />
       </View>
     </View>
@@ -76,7 +119,13 @@ const styles = StyleSheet.create({
   title:{
     fontSize: 32,
     fontWeight: '700',
-    paddingBottom: 100,
+    paddingBottom: 40,
     color: '#929292'
+  },
+  salvoTexto: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#cc0000',
+    paddingBottom: 10
   }
 })
