@@ -11,7 +11,6 @@ export default function App() {
   const [minutoDigitado, setMinutoDigitado] = useState('');
   const [horaDigitada, setHoraDigitada] = useState('');
   const [horaReal, setHoraReal] = useState('');
-
   const [alarmeSalvo, setAlarmeSalvo] = useState<string | null>(null);
 
 useEffect(() => {
@@ -58,7 +57,7 @@ const handleDefinirAlarme = async () => {
       await AsyncStorage.setItem('@alarme_registrado', horarioFormatado);
       
       setAlarmeSalvo(horarioFormatado);
-      Alert.alert("Sucesso", `O alarme das ${horarioFormatado} foi salvo com sucesso!`);
+      Alert.alert("Sucesso", `Alarme definido para ${horarioFormatado}.`);
       
       setHoraDigitada('');
       setMinutoDigitado('');
