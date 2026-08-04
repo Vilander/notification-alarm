@@ -66,6 +66,8 @@ const handleDefinirAlarme = async () => {
     }
   };
 
+const isBotaoBloqueado = !horaDigitada || !minutoDigitado;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}> ⏱️ ClockBox ⏱️ </Text>
@@ -87,6 +89,7 @@ const handleDefinirAlarme = async () => {
         <Button 
           title="Definir Alarme" 
           onPress={handleDefinirAlarme}
+          disabled={isBotaoBloqueado}
         />
       </View>
     </View>
